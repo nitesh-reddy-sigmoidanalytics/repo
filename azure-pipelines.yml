@@ -31,12 +31,20 @@ stages:
         npm run build
       displayName: 'Install Dependencies and Build'
 
-    # Publish build artifacts
-    - task: PublishPipelineArtifact@1
+    # Archive the app into a zip
+    - task: ArchiveFiles@2
       inputs:
-        targetPath: '$(Build.SourcesDirectory)'
-        artifact: 'drop'
-      displayName: 'Publish Build Artifacts'
+        rootFolderOrFile: '$(Build.SourcesDirectory)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+        replaceExistingArchive: true
+      displayName: 'Archive App Files'
+
+    # Publish the zip as a pipeline artifact
+    - publish: '$(Build.ArtifactStagingDirectory)/app.zip'
+      artifact: drop
+      displayName: 'Publish Build Artifact'
 
 # -----------------------
 # Release Stage
@@ -45,28 +53,25 @@ stages:
   displayName: 'Release Stage'
   dependsOn: Build
   jobs:
-  - deployment: DeployJob
+  - job: DeployJob
     displayName: 'Deploy to Azure App Service'
-    environment: 'Production'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          # Download the build artifact
-          - task: DownloadPipelineArtifact@2
-            inputs:
-              artifact: 'drop'
-              path: '$(System.ArtifactsDirectory)'
-            displayName: 'Download Build Artifacts'
+    steps:
+    # Download the build artifact
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: 'drop'
+        path: '$(System.ArtifactsDirectory)'
+      displayName: 'Download Build Artifact'
 
-          # Deploy to Azure App Service
-          - task: AzureWebApp@1
-            inputs:
-              azureSubscription: 'servcon'           # Your service connection
-              appType: 'webAppLinux'
-              appName: 'lazdevops1'                   # Your App Service name
-              package: '$(System.ArtifactsDirectory)/drop'
-            displayName: 'Deploy Node.js App to Azure'
+    # Deploy the zip to Azure App Service
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: 'servcon'            # Your service connection
+        appType: 'webAppLinux'
+        appName: 'lazdevops1'                    # Your App Service name
+        package: '$(System.ArtifactsDirectory)/drop/app.zip'
+      displayName: 'Deploy Node.js App to Azure'
+
 
 
 
