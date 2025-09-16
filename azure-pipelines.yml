@@ -61,7 +61,7 @@ stages:
         path: '$(Pipeline.Workspace)/drop'
       displayName: 'Download Build Artifact'
 
-    # Deploy the zip to Azure App Service
+    # Deploy the zip using Run From Package to prevent file conflicts
     - task: AzureWebApp@1
       inputs:
         azureSubscription: 'servcon'
@@ -69,7 +69,9 @@ stages:
         appName: 'lazdevops1'
         package: '$(Pipeline.Workspace)/drop/app.zip'
         enableCustomDeployment: true
-      displayName: 'Deploy Node.js App to Azure'
+        deploymentMethod: 'runFromPackage'
+      displayName: 'Deploy Node.js App to Azure (Run From Package)'
+
 
 
 
