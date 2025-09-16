@@ -66,7 +66,7 @@ stages:
       inputs:
         azureSubscription: 'servcon'
         appType: 'webAppLinux'
-        appName: 'lazdevops'
+        appName: 'lazdevops1'
         package: '$(Pipeline.Workspace)/drop/app.zip'
         enableCustomDeployment: true
       displayName: 'Deploy Node.js App to Azure'
