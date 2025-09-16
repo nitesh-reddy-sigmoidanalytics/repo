@@ -9,10 +9,64 @@ trigger:
 pool:
   name: agent-pool
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'
-  displayName: 'Install Node.js'
+stages:
+# -----------------------
+# Build Stage
+# -----------------------
+- stage: Build
+  displayName: 'Build Stage'
+  jobs:
+  - job: BuildJob
+    displayName: 'Build Job'
+    steps:
+    # Install Node.js
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '20.x'
+      displayName: 'Install Node.js'
+
+    # Install dependencies and build
+    - script: |
+        npm install
+        npm run build
+      displayName: 'Install Dependencies and Build'
+
+    # Publish build artifacts
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(Build.SourcesDirectory)'
+        artifact: 'drop'
+      displayName: 'Publish Build Artifacts'
+
+# -----------------------
+# Release Stage
+# -----------------------
+- stage: Release
+  displayName: 'Release Stage'
+  dependsOn: Build
+  jobs:
+  - deployment: DeployJob
+    displayName: 'Deploy to Azure App Service'
+    environment: 'Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Download the build artifact
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: 'drop'
+              path: '$(System.ArtifactsDirectory)'
+            displayName: 'Download Build Artifacts'
+
+          # Deploy to Azure App Service
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'servcon'           # Your service connection
+              appType: 'webAppLinux'
+              appName: 'lazdevops1'                   # Your App Service name
+              package: '$(System.ArtifactsDirectory)/drop'
+            displayName: 'Deploy Node.js App to Azure'
+
 
 
