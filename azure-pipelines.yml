@@ -42,8 +42,10 @@ stages:
       displayName: 'Archive App Files'
 
     # Publish the zip as a pipeline artifact
-    - publish: '$(Build.ArtifactStagingDirectory)/app.zip'
-      artifact: drop
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)/app.zip'
+        artifact: 'drop'
       displayName: 'Publish Build Artifact'
 
 # -----------------------
@@ -56,21 +58,22 @@ stages:
   - job: DeployJob
     displayName: 'Deploy to Azure App Service'
     steps:
-    # Download the build artifact
+    # Download the pipeline artifact
     - task: DownloadPipelineArtifact@2
       inputs:
         artifact: 'drop'
-        path: '$(System.ArtifactsDirectory)'
+        path: '$(Pipeline.Workspace)/drop'
       displayName: 'Download Build Artifact'
 
     # Deploy the zip to Azure App Service
     - task: AzureWebApp@1
       inputs:
-        azureSubscription: 'servcon'            # Your service connection
+        azureSubscription: 'servcon'
         appType: 'webAppLinux'
-        appName: 'lazdevops1'                    # Your App Service name
-        package: '$(System.ArtifactsDirectory)/drop/app.zip'
+        appName: 'lazdevops1'
+        package: '$(Pipeline.Workspace)/drop/app.zip'
       displayName: 'Deploy Node.js App to Azure'
+
 
 
 
