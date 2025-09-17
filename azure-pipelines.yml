@@ -1,8 +1,3 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
 - main
 
@@ -25,21 +20,26 @@ stages:
         versionSpec: '20.x'
       displayName: 'Install Node.js'
 
-    # Install dependencies and build
+    # Install dependencies and build React app
     - script: |
         npm install
         npm run build
-      displayName: 'Install Dependencies and Build'
+      displayName: 'Install Dependencies and Build React App'
 
-    # Archive the app into a zip
+    # Copy server.js into build output
+    - script: |
+        cp server.js build/
+      displayName: 'Copy server.js to Build Folder'
+
+    # Archive build output (React build + server.js)
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)'
-        includeRootFolder: false
+        rootFolderOrFile: '$(Build.SourcesDirectory)/build'
+        includeRootFolder: true
         archiveType: 'zip'
         archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
         replaceExistingArchive: true
-      displayName: 'Archive App Files'
+      displayName: 'Archive Build Output'
 
     # Publish the zip as a pipeline artifact
     - task: PublishPipelineArtifact@1
@@ -65,14 +65,100 @@ stages:
         path: '$(Pipeline.Workspace)/drop'
       displayName: 'Download Build Artifact'
 
-    # Deploy the zip to Azure App Service
+    # Deploy the zip package to Azure App Service
     - task: AzureWebApp@1
       inputs:
         azureSubscription: 'servcon'
         appType: 'webAppLinux'
         appName: 'lazdevops2'
         package: '$(Pipeline.Workspace)/drop/app.zip'
-      displayName: 'Deploy Node.js App to Azure'
+      displayName: 'Deploy React App to Azure'
+
+
+
+
+
+
+
+
+
+
+
+# # Node.js
+# # Build a general Node.js project with npm.
+# # Add steps that analyze code, save build artifacts, deploy, and more:
+# # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+# trigger:
+# - main
+
+# pool:
+#   name: agent-pool
+
+# stages:
+# # -----------------------
+# # Build Stage
+# # -----------------------
+# - stage: Build
+#   displayName: 'Build Stage'
+#   jobs:
+#   - job: BuildJob
+#     displayName: 'Build Job'
+#     steps:
+#     # Install Node.js
+#     - task: NodeTool@0
+#       inputs:
+#         versionSpec: '20.x'
+#       displayName: 'Install Node.js'
+
+#     # Install dependencies and build
+#     - script: |
+#         npm install
+#         npm run build
+#       displayName: 'Install Dependencies and Build'
+
+#     # Archive the app into a zip
+#     - task: ArchiveFiles@2
+#       inputs:
+#         rootFolderOrFile: '$(Build.SourcesDirectory)'
+#         includeRootFolder: false
+#         archiveType: 'zip'
+#         archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+#         replaceExistingArchive: true
+#       displayName: 'Archive App Files'
+
+#     # Publish the zip as a pipeline artifact
+#     - task: PublishPipelineArtifact@1
+#       inputs:
+#         targetPath: '$(Build.ArtifactStagingDirectory)/app.zip'
+#         artifact: 'drop'
+#       displayName: 'Publish Build Artifact'
+
+# # -----------------------
+# # Release Stage
+# # -----------------------
+# - stage: Release
+#   displayName: 'Release Stage'
+#   dependsOn: Build
+#   jobs:
+#   - job: DeployJob
+#     displayName: 'Deploy to Azure App Service'
+#     steps:
+#     # Download the pipeline artifact
+#     - task: DownloadPipelineArtifact@2
+#       inputs:
+#         artifact: 'drop'
+#         path: '$(Pipeline.Workspace)/drop'
+#       displayName: 'Download Build Artifact'
+
+#     # Deploy the zip to Azure App Service
+#     - task: AzureWebApp@1
+#       inputs:
+#         azureSubscription: 'servcon'
+#         appType: 'webAppLinux'
+#         appName: 'lazdevops2'
+#         package: '$(Pipeline.Workspace)/drop/app.zip'
+#       displayName: 'Deploy Node.js App to Azure'
 
 
 
