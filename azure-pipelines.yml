@@ -26,20 +26,20 @@ stages:
         npm run build
       displayName: 'Install Dependencies and Build React App'
 
-    # Copy server.js into build output
-    - script: |
-        cp server.js build/
-      displayName: 'Copy server.js to Build Folder'
-
-    # Archive build output (React build + server.js)
+    # Archive only the files needed for deployment
     - task: ArchiveFiles@2
       inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)/build'
-        includeRootFolder: true
+        rootFolderOrFile: '$(Build.SourcesDirectory)'
+        includeRootFolder: false
         archiveType: 'zip'
         archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
         replaceExistingArchive: true
-      displayName: 'Archive Build Output'
+        includePatterns: |
+          build/**
+          server.js
+          package.json
+          package-lock.json
+      displayName: 'Archive React Build + Server.js'
 
     # Publish the zip as a pipeline artifact
     - task: PublishPipelineArtifact@1
@@ -70,9 +70,10 @@ stages:
       inputs:
         azureSubscription: 'servcon'
         appType: 'webAppLinux'
-        appName: 'lazdevops2'
+        appName: 'lazdevops'
         package: '$(Pipeline.Workspace)/drop/app.zip'
       displayName: 'Deploy React App to Azure'
+
 
 
 
